@@ -1,0 +1,10 @@
+{
+  "name": "mini-games-nexus",
+  "version": 2,
+  "public": true,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/", "destination": "/main.html" }
+  ]
+}

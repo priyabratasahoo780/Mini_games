@@ -1,333 +1,270 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MindShift - Sliding Puzzle</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Nexus | Ultimate Mini-Game Collection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --primary-glow: hsla(260, 100%, 65%, 0.15);
+            --accent-color: #7d5fff;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a8;
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
 
-<style>
-:root {
-  --primary-color: #6c5ce7;
-  --secondary-color: #a29bfe;
-  --accent-color: #00cec9;
-  --bg-color: #dfe6e9;
-  --text-color: #2d3436;
-  --tile-color: #ffffff;
-  --success-color: #00b894;
-}
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
 
-body.dark {
-  --bg-color: #1e272e;
-  --text-color: #f5f6fa;
-  --tile-color: #2f3640;
-}
+        /* Animated Background */
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                radial-gradient(circle at 20% 30%, var(--primary-glow) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, hsla(190, 100%, 50%, 0.1) 0%, transparent 40%);
+            z-index: -1;
+            filter: blur(80px);
+        }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+        header {
+            padding: 3rem 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-body {
-  font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, var(--secondary-color), var(--bg-color));
-  color: var(--text-color);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+        .title {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #7d5fff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-/* HEADER */
-header {
-  padding: 1rem;
-  background: rgba(255,255,255,0.8);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
-.logo {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--primary-color);
-}
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
 
-.toggle-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  cursor: pointer;
-  border-radius: 8px;
-  background: var(--primary-color);
-  color: white;
-}
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
 
-/* MAIN */
-main {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+        .game-card {
+            background: var(--surface-color);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
 
-.game-wrapper {
-  background: rgba(255,255,255,0.7);
-  padding: 2rem;
-  border-radius: 15px;
-  display: flex;
-  gap: 2rem;
-}
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(125, 95, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
 
-/* SIDEBAR */
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
+        .game-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
 
-.stat-box {
-  background: white;
-  padding: 1rem;
-  border-radius: 10px;
-  text-align: center;
-}
+        .game-card:hover::before {
+            transform: translateX(100%);
+        }
 
-.stat-value {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: var(--primary-color);
-}
+        .game-icon {
+            font-size: 3rem;
+            background: rgba(125, 95, 255, 0.1);
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            color: var(--accent-color);
+        }
 
-.btn {
-  padding: 0.8rem;
-  border: none;
-  cursor: pointer;
-  border-radius: 10px;
-  font-weight: 600;
-  background: var(--primary-color);
-  color: white;
-}
+        .game-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
 
-/* BOARD */
-#puzzle-board {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 10px;
-  background: var(--secondary-color);
-  border-radius: 15px;
-  width: 300px;
-  aspect-ratio: 1;
-}
+        .game-info p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
 
-.tile {
-  background: var(--tile-color);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2rem;
-  font-weight: bold;
-  border-radius: 10px;
-  cursor: pointer;
-}
+        .play-btn {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 1rem;
+        }
 
-.tile.empty {
-  background: transparent;
-  cursor: default;
-}
+        .play-btn span {
+            transition: transform 0.3s ease;
+        }
 
-/* WIN */
-#win-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
+        .game-card:hover .play-btn span {
+            transform: translateX(5px);
+        }
 
-.win-box {
-  background: white;
-  padding: 2rem;
-  border-radius: 15px;
-  text-align: center;
-}
-</style>
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--card-border);
+            margin-top: 4rem;
+        }
+
+        .footer-logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .footer-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-color);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--card-border);
+        }
+
+        @media (max-width: 768px) {
+            .title { font-size: 2.5rem; }
+            .game-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
-
 <body>
+    <div class="bg-glow"></div>
 
-<header>
-  <div class="logo">Mind<span style="color:var(--accent-color)">Shift</span></div>
-  <button class="toggle-btn" id="themeBtn">🌙 Mode</button>
-</header>
+    <header>
+        <h1 class="title">Game Nexus</h1>
+        <p class="subtitle">A curated collection of minimalist, high-impact mini-games designed for focus and fun.</p>
+    </header>
 
-<main>
-  <div class="game-wrapper">
+    <main>
+        <div class="game-grid">
+            <!-- Ultimate Puzzle -->
+            <a href="new.html" class="game-card">
+                <div class="game-icon">🧩</div>
+                <div class="game-info">
+                    <h3>Ultimate Puzzle</h3>
+                    <p>The definitive sliding puzzle experience with dynamic themes and fluid animations. Test your spatial reasoning.</p>
+                </div>
+                <div class="play-btn">Play Now <span>→</span></div>
+            </a>
 
-    <div class="sidebar">
-      <div class="stat-box">
-        Moves
-        <div class="stat-value" id="move-count">0</div>
-      </div>
-      <div class="stat-box">
-        Time
-        <div class="stat-value" id="timer">00:00</div>
-      </div>
+            <!-- Neon Pop -->
+            <a href="third.html" class="game-card">
+                <div class="game-icon">✨</div>
+                <div class="game-info">
+                    <h3>Neon Pop</h3>
+                    <p>A mesmerizing, arcade-style bubble popping game. Relax with vibrant visuals and satisfying mechanics.</p>
+                </div>
+                <div class="play-btn">Play Now <span>→</span></div>
+            </a>
 
-      <button class="btn" id="startBtn">Start</button>
-      <button class="btn" id="pauseBtn">Pause</button>
-      <button class="btn" id="newGameBtn">New Game</button>
-    </div>
+            <!-- Number Gun -->
+            <a href="second.html" class="game-card">
+                <div class="game-icon">🎯</div>
+                <div class="game-info">
+                    <h3>Number Gun</h3>
+                    <p>Fast-paced mental math. Shoot the targets matching the equation before time runs out. Precision is key.</p>
+                </div>
+                <div class="play-btn">Play Now <span>→</span></div>
+            </a>
 
-    <div id="puzzle-board"></div>
+            <!-- Classic Puzzle -->
+            <a href="index.html" class="game-card">
+                <div class="game-icon">🌀</div>
+                <div class="game-info">
+                    <h3>MindShift Classic</h3>
+                    <p>The original sliding puzzle that started it all. Clean, simple, and eternally challenging.</p>
+                </div>
+                <div class="play-btn">Play Now <span>→</span></div>
+            </a>
+        </div>
+    </main>
 
-  </div>
-</main>
-
-<div id="win-overlay">
-  <div class="win-box">
-    <h2>🎉 You Win!</h2>
-    <p>Moves: <b id="finalMoves"></b></p>
-    <p>Time: <b id="finalTime"></b></p>
-    <button class="btn" onclick="initGame()">Play Again</button>
-  </div>
-</div>
-
-<script>
-const GRID = 3;
-const TOTAL = GRID * GRID;
-
-let gameState = [];
-let moves = 0;
-let time = 0;
-let timer;
-let running = false;
-let paused = false;
-
-const board = document.getElementById("puzzle-board");
-const moveEl = document.getElementById("move-count");
-const timerEl = document.getElementById("timer");
-
-/* RANDOM COLOR */
-function randomTheme() {
-  const colors = ["#6c5ce7","#e17055","#0984e3","#00b894","#fd79a8"];
-  document.documentElement.style.setProperty('--primary-color', colors[Math.floor(Math.random()*colors.length)]);
-}
-
-/* INIT */
-function initGame() {
-  clearInterval(timer);
-  moves = 0;
-  time = 0;
-  running = false;
-  paused = false;
-  updateUI();
-  randomTheme();
-  document.getElementById("win-overlay").style.display = "none";
-
-  gameState = Array.from({length: TOTAL-1}, (_,i)=>i+1);
-  gameState.push(null);
-  shuffle();
-  render();
-}
-
-function shuffle() {
-  for(let i=0;i<100;i++){
-    const e = gameState.indexOf(null);
-    const n = neighbors(e);
-    swap(e, n[Math.floor(Math.random()*n.length)]);
-  }
-}
-
-function render() {
-  board.innerHTML="";
-  gameState.forEach((v,i)=>{
-    const d = document.createElement("div");
-    d.className="tile"+(v===null?" empty":"");
-    if(v!==null){
-      d.textContent=v;
-      d.onclick=()=>move(i);
-    }
-    board.appendChild(d);
-  });
-}
-
-function move(i) {
-  if(!running || paused) return;
-  const e = gameState.indexOf(null);
-  if(neighbors(e).includes(i)){
-    swap(i,e);
-    moves++;
-    updateUI();
-    render();
-    checkWin();
-  }
-}
-
-function neighbors(i){
-  const r=Math.floor(i/GRID), c=i%GRID;
-  const n=[];
-  if(r>0) n.push(i-GRID);
-  if(r<GRID-1) n.push(i+GRID);
-  if(c>0) n.push(i-1);
-  if(c<GRID-1) n.push(i+1);
-  return n;
-}
-
-function swap(a,b){
-  [gameState[a],gameState[b]]=[gameState[b],gameState[a]];
-}
-
-function startTimer(){
-  timer=setInterval(()=>{
-    time++;
-    timerEl.textContent=format(time);
-  },1000);
-}
-
-function updateUI(){
-  moveEl.textContent=moves;
-  timerEl.textContent=format(time);
-}
-
-function format(t){
-  return `${String(Math.floor(t/60)).padStart(2,"0")}:${String(t%60).padStart(2,"0")}`;
-}
-
-function checkWin(){
-  for(let i=0;i<TOTAL-1;i++){
-    if(gameState[i]!==i+1) return;
-  }
-  clearInterval(timer);
-  document.getElementById("finalMoves").textContent=moves;
-  document.getElementById("finalTime").textContent=format(time);
-  document.getElementById("win-overlay").style.display="flex";
-}
-
-/* BUTTONS */
-document.getElementById("startBtn").onclick=()=>{
-  if(!running){
-    running=true;
-    startTimer();
-  }
-};
-
-document.getElementById("pauseBtn").onclick=()=>{
-  paused=!paused;
-};
-
-document.getElementById("newGameBtn").onclick=initGame;
-
-document.getElementById("themeBtn").onclick=()=>{
-  document.body.classList.toggle("dark");
-};
-
-/* LOAD */
-initGame();
-</script>
-
+    <footer>
+        <span class="footer-logo">Nexus <span style="color:var(--accent-color)">Studios</span></span>
+        <p class="footer-text">Built with precision for the modern gamer. &copy; 2026</p>
+    </footer>
 </body>
 </html>
