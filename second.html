@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Number Gun Nexus | Premium Math Challenge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #ff7675;
+  --secondary: #74b9ff;
+  --bg-color: #0a0a0c;
+  --surface: rgba(255, 255, 255, 0.05);
+  --text: #ffffff;
+  --accent: #7d5fff;
+}
+
+body.light {
+  --bg-color: #f4f7f6;
+  --surface: rgba(0, 0, 0, 0.05);
+  --text: #2d3436;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  cursor: crosshair; /* Fallback */
+}
+
+/* CUSTOM CROSSHAIR */
+body::after {
+  content: '';
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  display: none;
+}
+
+/* HEADER / HUD */
+header {
+  height: 80px;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  z-index: 100;
+  position: relative;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -1px;
+}
+
+.stats {
+  display: flex;
+  gap: 30px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  opacity: 0.6;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* GAME LAYOUT */
+#game-container {
+  display: flex;
+  height: calc(100vh - 80px);
+}
+
+/* SIDEBAR CONTROLS */
+#sidebar {
+  width: 300px;
+  background: var(--surface);
+  border-right: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  gap: 1.5rem;
+  z-index: 100;
+}
+
+#question-area {
+  background: var(--bg-color);
+  padding: 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 20px rgba(125, 95, 255, 0.2);
+}
+
+#question-text {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 10px 0;
+}
+
+.btn {
+  padding: 1rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 0 #5b3fd7;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #5b3fd7;
+}
+
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #5b3fd7;
+}
+
+.btn-secondary {
+  background: #636e72;
+  box-shadow: 0 4px 0 #2d3436;
+}
+
+.btn-secondary:hover {
+  box-shadow: 0 6px 0 #2d3436;
+}
+
+.btn-secondary:active {
+  box-shadow: 0 2px 0 #2d3436;
+}
+
+/* GAME AREA */
+#game-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at center, rgba(125, 95, 255, 0.05) 0%, transparent 70%);
+}
+
+.target {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 15px var(--accent);
+  animation: floatUp linear forwards;
+  transition: transform 0.1s;
+}
+
+.target:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 30px var(--accent);
+}
+
+@keyframes floatUp {
+  from { transform: translateY(110vh); }
+  to { transform: translateY(-150px); }
+}
+
+/* OVERLAYS */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: var(--surface);
+  padding: 3rem;
+  border-radius: 24px;
+  text-align: center;
+  border: 1px solid var(--accent);
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-box h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.modal-box p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.8;
+}
+
+/* MISC */
+.shake {
+  animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.particle {
+  position: absolute;
+  pointer-events: none;
+  background: var(--accent);
+  border-radius: 50%;
+  z-index: 50;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Number<span style="color:var(--accent)">Gun</span></div>
+  <div class="stats">
+    <div class="stat-item">
+      <span class="stat-label">Score</span>
+      <span id="score" class="stat-value">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">High Score</span>
+      <span id="highScore" class="stat-value">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Time</span>
+      <span id="timer" class="stat-value">20.0</span>
+    </div>
+  </div>
+  <button class="btn btn-secondary" id="themeBtn" style="padding: 0.5rem 1rem;">🌙</button>
+</header>
+
+<div id="game-container">
+  <aside id="sidebar">
+    <div id="question-area">
+      <span class="stat-label">Active Mission</span>
+      <div id="question-text">READY?</div>
+    </div>
+    
+    <button class="btn" id="startBtn">START MISSION</button>
+    <button class="btn btn-secondary" id="pauseBtn" disabled>PAUSE</button>
+    <button class="btn btn-secondary" id="newBtn">RESTART</button>
+    
+    <div style="margin-top: auto; font-size: 0.8rem; opacity: 0.5;">
+      Hit the bubble matching the equation. +2s for correct hits!
+    </div>
+  </aside>
+
+  <main id="game-area"></main>
+</div>
+
+<div id="overlay">
+  <div class="modal-box">
+    <h2 id="modal-title">MISSION OVER</h2>
+    <p>Final Score: <span id="finalScore" style="color:var(--accent); font-weight:800;">0</span></p>
+    <button class="btn" style="width:100%" onclick="initGame()">DEPLOY AGAIN</button>
+  </div>
+</div>
+
+<script>
+const gameArea = document.getElementById("game-area");
+const questionEl = document.getElementById("question-text");
+const scoreEl = document.getElementById("score");
+const highScoreEl = document.getElementById("highScore");
+const timerEl = document.getElementById("timer");
+const startBtn = document.getElementById("startBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const overlay = document.getElementById("overlay");
+
+let score = 0;
+let highScore = localStorage.getItem("gunHS") || 0;
+let correct;
+let timeLeft = 20;
+let timer;
+let isRunning = false;
+let isPaused = false;
+let highFrequencyTimer;
+
+highScoreEl.textContent = highScore;
+
+// --- CORE ---
+
+function initGame() {
+  stopAll();
+  score = 0;
+  timeLeft = 20;
+  isRunning = true;
+  isPaused = false;
+  
+  scoreEl.textContent = score;
+  timerEl.textContent = timeLeft.toFixed(1);
+  overlay.style.display = "none";
+  pauseBtn.disabled = false;
+  startBtn.disabled = true;
+
+  nextQuestion();
+}
+
+function stopAll() {
+  clearInterval(timer);
+  gameArea.innerHTML = "";
+  isRunning = false;
+  pauseBtn.disabled = true;
+  startBtn.disabled = false;
+}
+
+function nextQuestion() {
+  if (!isRunning) return;
+  gameArea.innerHTML = "";
+  
+  let ops = ["+", "-", "×", "÷"];
+  let op = ops[Math.floor(Math.random() * ops.length)];
+  let a, b;
+
+  switch(op) {
+    case "+": 
+      a = Math.floor(Math.random() * 20) + 1;
+      b = Math.floor(Math.random() * 20) + 1;
+      correct = a + b;
+      break;
+    case "-": 
+      a = Math.floor(Math.random() * 30) + 10;
+      b = Math.floor(Math.random() * 10) + 1;
+      correct = a - b;
+      break;
+    case "×": 
+      a = Math.floor(Math.random() * 10) + 1;
+      b = Math.floor(Math.random() * 5) + 1;
+      correct = a * b;
+      break;
+    case "÷": 
+      b = Math.floor(Math.random() * 10) + 1;
+      correct = Math.floor(Math.random() * 10) + 1;
+      a = b * correct; // Ensures integer result
+      break;
+  }
+
+  questionEl.textContent = `${a} ${op} ${b}`;
+  spawnTargets();
+  startMissionTimer();
+}
+
+function spawnTargets() {
+  let answers = new Set([correct]);
+  while(answers.size < 5) {
+    let wrong = correct + (Math.floor(Math.random() * 10) - 5);
+    if(wrong !== correct && wrong >= 0) answers.add(wrong);
+  }
+
+  let ansArray = Array.from(answers);
+  // Shuffle positions
+  ansArray.sort(() => Math.random() - 0.5);
+
+  ansArray.forEach((v, i) => {
+    const tile = document.createElement("div");
+    tile.className = "target";
+    tile.textContent = v;
+    tile.style.left = `${10 + (i * 18)}%`;
+    tile.style.animationDuration = `${5 + Math.random() * 3}s`;
+    tile.onclick = (e) => {
+      e.stopPropagation();
+      shoot(v, tile);
+    };
+    gameArea.appendChild(tile);
+  });
+}
+
+function shoot(v, element) {
+  if (isPaused || !isRunning) return;
+
+  if (v === correct) {
+    score++;
+    timeLeft += 2.0; // Skill reward
+    scoreEl.textContent = score;
+    createExplosion(element.offsetLeft + 45, element.offsetTop + 45);
+    nextQuestion();
+  } else {
+    missEffect();
+    timeLeft -= 3.0; // Penalty
+  }
+}
+
+function startMissionTimer() {
+  clearInterval(timer);
+  timer = setInterval(() => {
+    if (!isPaused) {
+      timeLeft -= 0.1;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        gameOver();
+      }
+      timerEl.textContent = timeLeft.toFixed(1);
+    }
+  }, 100);
+}
+
+function gameOver() {
+  stopAll();
+  document.getElementById("finalScore").textContent = score;
+  overlay.style.display = "flex";
+  
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem("gunHS", highScore);
+    highScoreEl.textContent = highScore;
+    document.getElementById("modal-title").textContent = "🏆 NEW RECORD!";
+  } else {
+    document.getElementById("modal-title").textContent = "MISSION OVER";
+  }
+}
+
+// --- FX ---
+
+function missEffect() {
+  document.body.classList.add("shake");
+  setTimeout(() => document.body.classList.remove("shake"), 300);
+}
+
+function createExplosion(x, y) {
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+    const size = Math.random() * 6 + 2;
+    p.style.width = size + "px";
+    p.style.height = size + "px";
+    p.style.left = x + "px";
+    p.style.top = y + "px";
+    
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = Math.random() * 100 + 50;
+    const vx = Math.cos(angle) * velocity;
+    const vy = Math.sin(angle) * velocity;
+
+    gameArea.appendChild(p);
+
+    const anim = p.animate([
+      { transform: `translate(0, 0)`, opacity: 1 },
+      { transform: `translate(${vx}px, ${vy}px)`, opacity: 0 }
+    ], { duration: 600, easing: 'ease-out' });
+
+    anim.onfinish = () => p.remove();
+  }
+}
+
+// --- LISTENERS ---
+
+startBtn.onclick = initGame;
+
+pauseBtn.onclick = () => {
+  isPaused = !isPaused;
+  pauseBtn.textContent = isPaused ? "RESUME" : "PAUSE";
+  if(isPaused) {
+    gameArea.style.opacity = "0.3";
+    gameArea.style.pointerEvents = "none";
+  } else {
+    gameArea.style.opacity = "1";
+    gameArea.style.pointerEvents = "all";
+  }
+};
+
+document.getElementById("newBtn").onclick = initGame;
+
+document.getElementById("themeBtn").onclick = () => {
+  document.body.classList.toggle("light");
+  document.getElementById("themeBtn").textContent = document.body.classList.contains("light") ? "☀️" : "🌙";
+};
+
+gameArea.onclick = () => {
+  if(isRunning && !isPaused) missEffect();
+};
+
+</script>
+</body>
+</html>

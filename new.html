@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindShift - Ultimate Puzzle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- DYNAMIC THEME VARIABLES --- */
+        :root {
+            /* Default Hue (Blue-ish) */
+            --hue: 230; 
+            
+            /* Colors derived from Hue */
+            --primary-color: hsl(var(--hue), 85%, 60%);
+            --secondary-color: hsl(var(--hue), 70%, 90%);
+            --accent-color: hsl(calc(var(--hue) + 150), 80%, 50%);
+            
+            /* Light Mode Bases */
+            --bg-color: #f4f7f6;
+            --surface-color: rgba(255, 255, 255, 0.9);
+            --text-color: #2d3436;
+            --tile-bg: #ffffff;
+            --tile-text: var(--primary-color);
+            --shadow-color: rgba(0,0,0,0.1);
+            
+            --border-radius: 16px;
+        }
+
+        /* Dark Mode Overrides */
+        body.dark-mode {
+            --bg-color: #181818;
+            --surface-color: rgba(40, 40, 40, 0.95);
+            --text-color: #dfe6e9;
+            --tile-bg: #2d3436;
+            --tile-text: var(--secondary-color);
+            --shadow-color: rgba(0,0,0,0.5);
+            --secondary-color: hsl(var(--hue), 30%, 20%); 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.3s ease; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden; /* Prevent scroll on mobile during animations */
+        }
+
+        /* --- HEADER --- */
+        header {
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-color);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { font-size: 1.6rem; font-weight: 700; color: var(--primary-color); letter-spacing: -1px; }
+        .logo span { color: var(--text-color); }
+
+        .theme-toggle {
+            background: transparent;
+            border: 2px solid var(--text-color);
+            color: var(--text-color);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-toggle:hover { opacity: 0.7; transform: scale(1.05); }
+
+        /* --- MAIN LAYOUT --- */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .game-wrapper {
+            background: var(--surface-color);
+            padding: 2.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 20px 40px var(--shadow-color);
+            display: flex;
+            gap: 3rem;
+            max-width: 950px;
+            width: 100%;
+            position: relative;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            min-width: 220px;
+            justify-content: center;
+        }
+
+        .stat-box {
+            background: var(--bg-color);
+            padding: 1.2rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--shadow-color);
+        }
+
+        .stat-label { font-size: 0.85rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--primary-color); display: block; margin-top: 5px; }
+
+        .btn {
+            border: none;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            color: white;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 12px var(--shadow-color); }
+        .btn:active { transform: translateY(-1px); }
+        
+        /* Disabled button state */
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); }
+        .btn-secondary { background-color: #636e72; }
+
+        /* --- PUZZLE BOARD --- */
+        .puzzle-container {
+            flex: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #puzzle-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 480px;
+            aspect-ratio: 1;
+            background: var(--bg-color);
+            padding: 12px;
+            border-radius: var(--border-radius);
+            transition: filter 0.3s;
+        }
+
+        #puzzle-board.blurred {
+            filter: blur(12px) grayscale(50%);
+            pointer-events: none;
+        }
+
+        .tile {
+            background-color: var(--tile-bg);
+            color: var(--tile-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1); /* 3D effect */
+            transition: transform 0.2s, background-color 0.3s;
+        }
+
+        .tile:hover:not(.empty) { transform: translateY(-4px); }
+        .tile:active:not(.empty) { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+        
+        .tile.empty {
+            background: transparent;
+            box-shadow: none;
+            cursor: default;
+            border: 2px dashed var(--shadow-color);
+        }
+
+        /* --- OVERLAYS --- */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--border-radius);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .overlay-content {
+            background: var(--surface-color);
+            padding: 3rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            max-width: 80%;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .overlay.active .overlay-content { transform: scale(1); }
+
+        .overlay h2 { font-size: 2rem; margin-bottom: 0.5rem; color: var(--primary-color); }
+        .overlay p { margin-bottom: 2rem; color: var(--text-color); font-size: 1.1rem; }
+
+        /* Pause Text */
+        #pause-indicator {
+            position: absolute;
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--text-color);
+            opacity: 0.8;
+            display: none;
+            z-index: 60;
+            pointer-events: none;
+            letter-spacing: 5px;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 850px) {
+            .game-wrapper { flex-direction: column-reverse; padding: 1.5rem; gap: 2rem; }
+            .sidebar { flex-direction: row; flex-wrap: wrap; }
+            .stat-box { flex: 1 1 40%; }
+            .btn { flex: 1 1 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Mind<span>Shift</span></div>
+        <button class="theme-toggle" id="theme-btn">
+            <span id="theme-icon">☀️</span> <span id="theme-text">Day Mode</span>
+        </button>
+    </header>
+
+    <main>
+        <div class="game-wrapper">
+            
+            <aside class="sidebar">
+                <div class="stat-box">
+                    <span class="stat-label">Moves</span>
+                    <span class="stat-value" id="move-count">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Time</span>
+                    <span class="stat-value" id="timer">00:00</span>
+                </div>
+                
+                <button class="btn btn-secondary" id="pause-btn" disabled>Pause ⏸</button>
+                <button class="btn btn-primary" id="new-game-btn" disabled>New Game ↻</button>
+            </aside>
+
+            <div class="puzzle-container">
+                <div id="pause-indicator">PAUSED</div>
+                
+                <div id="puzzle-board">
+                    </div>
+
+                <div id="start-overlay" class="overlay active">
+                    <div class="overlay-content">
+                        <h2>Ready to Play?</h2>
+                        <p>Click below to start the challenge.</p>
+                        <button class="btn btn-primary" onclick="startGame()">Start Game ▶</button>
+                    </div>
+                </div>
+
+                <div id="win-overlay" class="overlay">
+                    <div class="overlay-content">
+                        <h2>🎉 Solved! 🎉</h2>
+                        <p>Moves: <strong id="final-moves">0</strong> | Time: <strong id="final-time">00:00</strong></p>
+                        <button class="btn btn-primary" onclick="startGame()">Play Again ↻</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        const GRID_SIZE = 3; 
+        const TOTAL_TILES = GRID_SIZE * GRID_SIZE;
+
+        // --- GAME STATE ---
+        let gameState = [];
+        let moves = 0;
+        let timerInterval;
+        let secondsElapsed = 0;
+        let isGameActive = false; // Key flag: tiles won't move if false
+        let isPaused = false;
+
+        // --- DOM REFERENCES ---
+        const boardElement = document.getElementById('puzzle-board');
+        const moveCountElement = document.getElementById('move-count');
+        const timerElement = document.getElementById('timer');
+        const pauseBtn = document.getElementById('pause-btn');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const startOverlay = document.getElementById('start-overlay');
+        const winOverlay = document.getElementById('win-overlay');
+        const pauseIndicator = document.getElementById('pause-indicator');
+        const themeBtn = document.getElementById('theme-btn');
+
+        // --- THEME LOGIC ---
+        function randomizeTheme() {
+            // Generates a random color hue (0-360) for a unique look
+            const randomHue = Math.floor(Math.random() * 360);
+            document.documentElement.style.setProperty('--hue', randomHue);
+        }
+
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('theme-icon').textContent = isDark ? '🌙' : '☀️';
+            document.getElementById('theme-text').textContent = isDark ? 'Night Mode' : 'Day Mode';
+        });
+
+        // --- INITIALIZATION ---
+        
+        // This runs on page load: renders a dummy board but DOES NOT start game
+        window.addEventListener('DOMContentLoaded', () => {
+            renderDummyBoard();
+        });
+
+        function renderDummyBoard() {
+            boardElement.innerHTML = '';
+            boardElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+            
+            // Just show numbers 1-8 visually
+            for(let i=1; i<TOTAL_TILES; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.textContent = i;
+                boardElement.appendChild(tile);
+            }
+            const empty = document.createElement('div');
+            empty.className = 'tile empty';
+            boardElement.appendChild(empty);
+
+            // Ensure overlay is visible
+            startOverlay.classList.add('active');
+            
+            // Disable controls until start
+            pauseBtn.disabled = true;
+            newGameBtn.disabled = true;
+        }
+
+        // --- GAME CONTROL ---
+
+        // Triggered by "Start Game" or "Play Again" button
+        function startGame() {
+            // 1. Hide Overlays
+            startOverlay.classList.remove('active');
+            winOverlay.classList.remove('active');
+            
+            // 2. Randomize Theme
+            randomizeTheme();
+
+            // 3. Reset Game State
+            stopTimer();
+            moves = 0;
+            secondsElapsed = 0;
+            isPaused = false;
+            isGameActive = true; 
+
+            // 4. Enable Controls
+            pauseBtn.disabled = false;
+            newGameBtn.disabled = false;
+            updateStatsUI();
+            updatePauseUI();
+            boardElement.classList.remove('blurred');
+            pauseIndicator.style.display = 'none';
+
+            // 5. Setup Logic
+            // Create solved array: [1, 2, 3... null]
+            gameState = Array.from({ length: TOTAL_TILES - 1 }, (_, i) => i + 1);
+            gameState.push(null);
+
+            // 6. Shuffle & Run
+            shuffleBoard();
+            renderBoard();
+            startTimer();
+        }
+
+        // --- PAUSE LOGIC ---
+        function togglePause() {
+            if (!isGameActive) return;
+
+            isPaused = !isPaused;
+            updatePauseUI();
+
+            if (isPaused) {
+                stopTimer();
+                boardElement.classList.add('blurred');
+                pauseIndicator.style.display = 'block';
+            } else {
+                startTimer();
+                boardElement.classList.remove('blurred');
+                pauseIndicator.style.display = 'none';
+            }
+        }
+
+        function updatePauseUI() {
+            if (isPaused) {
+                pauseBtn.textContent = "Resume ▶";
+                pauseBtn.style.background = "var(--accent-color)";
+            } else {
+                pauseBtn.textContent = "Pause ⏸";
+                pauseBtn.style.background = ""; // Reset
+            }
+        }
+
+        // --- CORE LOGIC ---
+        function shuffleBoard() {
+            // Shuffle by simulating valid moves so puzzle is always solvable
+            const shuffleCount = TOTAL_TILES * 25; 
+            for (let i = 0; i < shuffleCount; i++) {
+                const emptyIdx = gameState.indexOf(null);
+                const validNeighbors = getValidNeighbors(emptyIdx);
+                const randomNeighbor = validNeighbors[Math.floor(Math.random() * validNeighbors.length)];
+                swapTilesInState(randomNeighbor, emptyIdx);
+            }
+        }
+
+        function renderBoard() {
+            boardElement.innerHTML = '';
+            boardElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+
+            gameState.forEach((value, index) => {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+                if (value === null) {
+                    tile.classList.add('empty');
+                } else {
+                    tile.textContent = value;
+                    tile.addEventListener('click', () => handleTileClick(index));
+                }
+                boardElement.appendChild(tile);
+            });
+        }
+
+        function handleTileClick(index) {
+            // CRITICAL: Checks if game is running
+            if (!isGameActive || isPaused) return;
+
+            const emptyIndex = gameState.indexOf(null);
+            
+            if (isAdjacent(index, emptyIndex)) {
+                swapTilesInState(index, emptyIndex);
+                moves++;
+                updateStatsUI();
+                renderBoard();
+                checkWin();
+            }
+        }
+
+        function isAdjacent(idx1, idx2) {
+            const row1 = Math.floor(idx1 / GRID_SIZE);
+            const col1 = idx1 % GRID_SIZE;
+            const row2 = Math.floor(idx2 / GRID_SIZE);
+            const col2 = idx2 % GRID_SIZE;
+            
+            return (Math.abs(row1 - row2) + Math.abs(col1 - col2)) === 1;
+        }
+
+        function getValidNeighbors(emptyIdx) {
+            const neighbors = [];
+            const row = Math.floor(emptyIdx / GRID_SIZE);
+            const col = emptyIdx % GRID_SIZE;
+
+            if (row > 0) neighbors.push(emptyIdx - GRID_SIZE); // Up
+            if (row < GRID_SIZE - 1) neighbors.push(emptyIdx + GRID_SIZE); // Down
+            if (col > 0) neighbors.push(emptyIdx - 1); // Left
+            if (col < GRID_SIZE - 1) neighbors.push(emptyIdx + 1); // Right
+            return neighbors;
+        }
+
+        function swapTilesInState(i, j) {
+            [gameState[i], gameState[j]] = [gameState[j], gameState[i]];
+        }
+
+        // --- WIN CONDITIONS ---
+        function checkWin() {
+            for (let i = 0; i < TOTAL_TILES - 1; i++) {
+                if (gameState[i] !== i + 1) return;
+            }
+            gameWon();
+        }
+
+        function gameWon() {
+            isGameActive = false;
+            stopTimer();
+            pauseBtn.disabled = true; // Disable pause on win
+            
+            document.getElementById('final-moves').textContent = moves;
+            document.getElementById('final-time').textContent = formatTime(secondsElapsed);
+            winOverlay.classList.add('active');
+        }
+
+        // --- UTILS ---
+        function startTimer() {
+            stopTimer();
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                timerElement.textContent = formatTime(secondsElapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function formatTime(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateStatsUI() {
+            moveCountElement.textContent = moves;
+            timerElement.textContent = formatTime(secondsElapsed);
+        }
+
+        // --- LISTENERS ---
+        newGameBtn.addEventListener('click', startGame); // New Game resets everything
+        pauseBtn.addEventListener('click', togglePause);
+
+    </script>
+</body>
+</html>

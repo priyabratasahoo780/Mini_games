@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindShift - Sliding Puzzle</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary-color: #6c5ce7;
+  --secondary-color: #a29bfe;
+  --accent-color: #00cec9;
+  --bg-color: #dfe6e9;
+  --text-color: #2d3436;
+  --tile-color: #ffffff;
+  --success-color: #00b894;
+}
+
+body.dark {
+  --bg-color: #1e272e;
+  --text-color: #f5f6fa;
+  --tile-color: #2f3640;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, var(--secondary-color), var(--bg-color));
+  color: var(--text-color);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+header {
+  padding: 1rem;
+  background: rgba(255,255,255,0.8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  background: var(--primary-color);
+  color: white;
+}
+
+/* MAIN */
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-wrapper {
+  background: rgba(255,255,255,0.7);
+  padding: 2rem;
+  border-radius: 15px;
+  display: flex;
+  gap: 2rem;
+}
+
+/* SIDEBAR */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stat-box {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.btn {
+  padding: 0.8rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 10px;
+  font-weight: 600;
+  background: var(--primary-color);
+  color: white;
+}
+
+/* BOARD */
+#puzzle-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 10px;
+  background: var(--secondary-color);
+  border-radius: 15px;
+  width: 300px;
+  aspect-ratio: 1;
+}
+
+.tile {
+  background: var(--tile-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.tile.empty {
+  background: transparent;
+  cursor: default;
+}
+
+/* WIN */
+#win-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.win-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Mind<span style="color:var(--accent-color)">Shift</span></div>
+  <button class="toggle-btn" id="themeBtn">🌙 Mode</button>
+</header>
+
+<main>
+  <div class="game-wrapper">
+
+    <div class="sidebar">
+      <div class="stat-box">
+        Moves
+        <div class="stat-value" id="move-count">0</div>
+      </div>
+      <div class="stat-box">
+        Time
+        <div class="stat-value" id="timer">00:00</div>
+      </div>
+
+      <button class="btn" id="startBtn">Start</button>
+      <button class="btn" id="pauseBtn">Pause</button>
+      <button class="btn" id="newGameBtn">New Game</button>
+    </div>
+
+    <div id="puzzle-board"></div>
+
+  </div>
+</main>
+
+<div id="win-overlay">
+  <div class="win-box">
+    <h2>🎉 You Win!</h2>
+    <p>Moves: <b id="finalMoves"></b></p>
+    <p>Time: <b id="finalTime"></b></p>
+    <button class="btn" onclick="initGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+const GRID = 3;
+const TOTAL = GRID * GRID;
+
+let gameState = [];
+let moves = 0;
+let time = 0;
+let timer;
+let running = false;
+let paused = false;
+
+const board = document.getElementById("puzzle-board");
+const moveEl = document.getElementById("move-count");
+const timerEl = document.getElementById("timer");
+
+/* RANDOM COLOR */
+function randomTheme() {
+  const colors = ["#6c5ce7","#e17055","#0984e3","#00b894","#fd79a8"];
+  document.documentElement.style.setProperty('--primary-color', colors[Math.floor(Math.random()*colors.length)]);
+}
+
+/* INIT */
+function initGame() {
+  clearInterval(timer);
+  moves = 0;
+  time = 0;
+  running = false;
+  paused = false;
+  updateUI();
+  randomTheme();
+  document.getElementById("win-overlay").style.display = "none";
+
+  gameState = Array.from({length: TOTAL-1}, (_,i)=>i+1);
+  gameState.push(null);
+  shuffle();
+  render();
+}
+
+function shuffle() {
+  for(let i=0;i<100;i++){
+    const e = gameState.indexOf(null);
+    const n = neighbors(e);
+    swap(e, n[Math.floor(Math.random()*n.length)]);
+  }
+}
+
+function render() {
+  board.innerHTML="";
+  gameState.forEach((v,i)=>{
+    const d = document.createElement("div");
+    d.className="tile"+(v===null?" empty":"");
+    if(v!==null){
+      d.textContent=v;
+      d.onclick=()=>move(i);
+    }
+    board.appendChild(d);
+  });
+}
+
+function move(i) {
+  if(!running || paused) return;
+  const e = gameState.indexOf(null);
+  if(neighbors(e).includes(i)){
+    swap(i,e);
+    moves++;
+    updateUI();
+    render();
+    checkWin();
+  }
+}
+
+function neighbors(i){
+  const r=Math.floor(i/GRID), c=i%GRID;
+  const n=[];
+  if(r>0) n.push(i-GRID);
+  if(r<GRID-1) n.push(i+GRID);
+  if(c>0) n.push(i-1);
+  if(c<GRID-1) n.push(i+1);
+  return n;
+}
+
+function swap(a,b){
+  [gameState[a],gameState[b]]=[gameState[b],gameState[a]];
+}
+
+function startTimer(){
+  timer=setInterval(()=>{
+    time++;
+    timerEl.textContent=format(time);
+  },1000);
+}
+
+function updateUI(){
+  moveEl.textContent=moves;
+  timerEl.textContent=format(time);
+}
+
+function format(t){
+  return `${String(Math.floor(t/60)).padStart(2,"0")}:${String(t%60).padStart(2,"0")}`;
+}
+
+function checkWin(){
+  for(let i=0;i<TOTAL-1;i++){
+    if(gameState[i]!==i+1) return;
+  }
+  clearInterval(timer);
+  document.getElementById("finalMoves").textContent=moves;
+  document.getElementById("finalTime").textContent=format(time);
+  document.getElementById("win-overlay").style.display="flex";
+}
+
+/* BUTTONS */
+document.getElementById("startBtn").onclick=()=>{
+  if(!running){
+    running=true;
+    startTimer();
+  }
+};
+
+document.getElementById("pauseBtn").onclick=()=>{
+  paused=!paused;
+};
+
+document.getElementById("newGameBtn").onclick=initGame;
+
+document.getElementById("themeBtn").onclick=()=>{
+  document.body.classList.toggle("dark");
+};
+
+/* LOAD */
+initGame();
+</script>
+
+</body>
+</html>
